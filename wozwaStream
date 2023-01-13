@@ -1,0 +1,41 @@
+#!/bin/sh
+
+echo "`date` WozwaStream started" >> /var/log/dolomitilivecam.log
+webCamNr=`cat /home/pi/dolomitilivecam/webCamNr.conf`
+webCamFrameRate=`cat /home/pi/dolomitilivecam/webCamFrameRate.conf`
+webCamHeight=`cat /home/pi/dolomitilivecam/webCamHeight.conf`
+webCamWidth=`cat /home/pi/dolomitilivecam/webCamWidth.conf`
+webCamOutWidth=`cat /home/pi/dolomitilivecam/webCamOutWidth.conf`
+webCamDevice=`cat /home/pi/dolomitilivecam/webCamDevice.conf`
+webCamInputFormat=`cat /home/pi/dolomitilivecam/webCamInputFormat.conf`
+streamFrameRate=`cat /home/pi/dolomitilivecam/streamFrameRate.conf`
+bandWidth=`cat /home/pi/dolomitilivecam/bandwidth.conf`
+debianVersion=`cat /etc/debian_version`
+
+url="rtmp://h057.video-stream-hosting.de:1935/dolomitilivecam-live?dolomitilivecam7e0QqA"
+#url="rtmp://192.168.1.155:1935/live"
+echo "Connecting to " $url
+
+if [ ${debianVersion%.*} = 8 ] || [ ${debianVersion%.*} -gt 8 ] ; then
+        prog=/opt/bin/ffmpeg/bin/ffmpeg
+    else
+        prog=/opt/bin/ffmpeg-debian7.0/bin/ffmpeg
+fi
+
+
+
+$prog -vcodec $webCamInputFormat -s $webCamWidth"x"$webCamHeight  -r $streamFrameRate -framerate $streamFrameRate -i $webCamDevice  -vf scale=$webCamOutWidth:-1  -g 320   -c:v h264_omx -b:v $bandWidth  -maxrate $bandWidth  -bufsize 1024K -f flv   $url/$webCamNr 
+
+
+
+
+
+
+if [ "`v4l2-ctl --list-devices|grep \"USB 2.0 Camera\"`" != "" ]
+then
+	echo "1.4"
+fi
+if [ "`v4l2-ctl --list-devices|grep \"UVC Camera (046d:0808)\"`" != "" ]
+then
+	echo "1.5"
+fi
